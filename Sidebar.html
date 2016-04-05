@@ -1,0 +1,425 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  
+  <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+  <!-- The CSS package above applies Google styling to buttons and other elements. -->
+  
+  <style>
+  .branding-below {
+    bottom: 56px;
+    top: 0;
+  }
+  
+  .branding-text {
+    left: 7px;
+    position: relative;
+    top: 3px;
+  }
+  
+  h5.PERSON{
+    color: #E93824;
+    }
+    
+  h5.LOCATION {
+    color: #2CAAE2;
+    }
+    
+    h5.ORGANISATION {
+    color: #FEC238;
+    }
+  
+  .col-contain {
+    overflow: hidden;
+  }
+  
+  .col-one {
+    float: left;
+    width: 50%;
+  }
+  
+  .logo {
+    vertical-align: middle;
+  }
+  
+  .radio-spacer {
+    height: 20px;
+  }
+  
+  .width-100 {
+    width: 100%;
+  }
+  </style>
+</head>
+<body>
+  <div class="sidebar branding-below">
+    <img src="https://s3.amazonaws.com/rosette-api/rosette-logo.jpg" style="width:250px;"/>
+    <div class="block">
+      <input type="checkbox" id="save-prefs">
+      <label for="save-prefs">Save selections</label>
+    </div>
+    <div class="block col-contain">
+      <div>
+        <label for="key"> API Key</label>
+        <input type="text" name="key" id="key">
+      </div>
+    </div>
+    <br>
+    
+         <!-- Nav tabs -->
+  <ul class="nav nav-tabs" role="tablist">
+    <li role="presentation" class="active"><a href="#entities" aria-controls="entities" role="tab" data-toggle="tab">Entities</a></li>
+    <li role="presentation"><a href="#wiki" aria-controls="wiki" role="tab" data-toggle="tab">Wiki</a></li>
+  </ul>
+  
+   <!-- Tab panes --> 
+   <div class="tab-content"> <div role="tabpanel" class="tab-pane active" id="entities">
+  <br>
+  <div class="block">
+  <label for="sourceLang">Source Language (optional)</label>
+  <div>
+  <select id="sourceLang" name="sourceLang" class="form-control col-sm-2">
+  <option value="auto">Auto</option>
+  <option value="ara">Arabic</option>
+  <option value="zho">Chinese</option>
+  <option value="nld">Dutch</option>
+  <option value="fra">French</option>
+  <option value="deu">German</option>
+  <option value="heb">Hebrew</option>
+  <option value="ind">Indonesian</option>
+  <option value="ita">Italian</option>
+  <option value="jpn">Japanese</option>
+  <option value="kor">Korean</option>
+  <option value="pus">Pashto</option>
+  <option value="fas">Persian</option>
+  <option value="por">Portugese</option>
+  <option value="rus">Russian</option>
+  <option value="spa">Spanish</option>
+  <option value="urd">Urdu</option>
+  </select>
+  </div>
+  
+  <br>
+
+  <label for="targetLang">Target Language</label>
+  <div>
+  <select id="targetLang" name="targetLang" class="form-control">
+  <option value="ara">Arabic</option>
+  <option value="zho">Chinese</option>
+  <option value="nld">Dutch</option>
+  <option value="eng">English</option>
+  <option value="fra">French</option>
+  <option value="deu">German</option>
+  <option value="heb">Hebrew</option>
+  <option value="ind">Indonesian</option>
+  <option value="ita">Italian</option>
+  <option value="jpn">Japanese</option>
+  <option value="kor">Korean</option>
+  <option value="pus">Pashto</option>
+  <option value="fas">Persian</option>
+  <option value="por">Portugese</option>
+  <option value="rus">Russian</option>
+  <option value="spa">Spanish</option>
+  <option value="urd">Urdu</option>
+  </select>
+  </div>
+  </div>
+  
+  <br>
+
+<label>Insert translation</label>
+<div class="block">
+<input type="checkbox" id="insertPerson">
+<label style="color:#E93824;" for="insertPerson">Person</label>
+<div style="font-size:12px;" id="peopleDiv">
+</div>
+</div>
+
+<div class="block">
+<input type="checkbox" id="insertLocation">
+<label style="color:#2CAAE2;" for="insertLocation">Location</label>
+<div style="font-size:12px;" id="locDiv">
+</div>
+</div>
+
+<div class="block">
+<input type="checkbox" id="insertOrganisation">
+<label style="color:#FEC238;" for="insertOrganisation">Organization</label>
+<div style="font-size:12px;" id="orgDiv">
+</div>
+</div>
+
+<br>
+
+<div class="block" id="button-bar">
+<button class="blue" id="run-analysis">Analyze</button>
+</div>
+
+<div class="block form-group">
+<p id="loading"></p>
+</div>
+
+  <div class="block form-group">        
+  <textarea style="display:none;" class="width-100" id="translated-text" rows="10"></textarea>    
+</div>
+
+</div>
+
+    <div role="tabpanel" class="tab-pane" id="wiki">
+
+      <br>
+      <div class="block" id="button-bar">
+        <button class="blue" id="get-wiki">Get wiki data</button>
+      </div>
+       
+    <br> 
+         <div id="titlepanel">
+  </div>
+  <div id="datapanel">
+  </div>
+  <div id="paragraphpanel">
+  </div>
+  <br>
+    <div class="block" id="wiki-error">
+      </div>
+   </div> 
+
+</div>
+</div>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
+</script>
+
+<!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+  
+<script>
+/**
+* On document load, assign click handlers to each button and try to load the
+* user's origin and destination language preferences if previously set.
+*/
+$(function() {
+  $('#run-analysis').click(admResults);
+  $('#get-wiki').click(getWikiData);
+  $('#run-analysis').click(runEntityExtraction);
+});
+
+/**
+* Callback function that populates the origin and destination selection
+* boxes with user preferences from the server.
+*
+* @param {Object} languagePrefs The saved origin and destination languages.
+*/
+function loadNameTranslationPreferences(userPrefs) {
+  $('#key').val(userPrefs.key);
+  $('#sourceLang').val(userPrefs.sourceLanguage);
+  $('#targetLang').val(userPrefs.targetLanguage);
+  $('#insertPerson').prop("checked", userPrefs.insertPerson);
+  $('#insertLocation').prop("checked", userPrefs.insertLocation);
+  $('#insertOrganisation').prop("checked", userPrefs.insertOrganisation);
+}
+
+/**
+* Runs a server-side function to translate the user-selected text and update
+* the sidebar UI with the resulting translation.
+*/
+function admResults() {
+$('#loading').text('Processing...');
+  this.disabled = true;
+  $('#error').remove();
+  var key = $('#key').val();
+  var savePrefs = $('#save-prefs').is(':checked');
+  google.script.run
+  .withSuccessHandler(
+    function(translatedText, element) {
+      $('#translated-text').val(translatedText);
+      var JSONobj = JSON.parse(translatedText);
+      var entitiesArray = JSONobj["attributes"]["entityMentions"]["items"];
+      for (var entCount = 0; entCount < entitiesArray.length; entCount++) {
+        google.script.run.colorText(entitiesArray[entCount]["normalized"], entitiesArray[entCount]["entityType"]);
+      }
+      element.disabled = false;
+      
+      nameInsertion();
+      google.script.run.withSuccessHandler(loadNameTranslationPreferences)
+  .withFailureHandler(showError).getPreferences();
+      
+    })
+    .withFailureHandler(
+      function(msg, element) {
+        showError(msg, $('#button-bar'));
+        element.disabled = false;
+      })
+      .withUserObject(this)
+      .admResults(key, savePrefs);
+}
+    
+    
+ /**
+  * Runs a server-side function to insert the translated text into the document
+  * at the user's cursor or selection.
+  */
+  function nameInsertion() {
+    this.disabled = true;
+    $('#error').remove();
+    var key = $('#key').val();
+    var sourceLanguage = $('#sourceLang').val();
+    var targetLanguage = $('#targetLang').val();
+    var insertPers = $('#insertPerson').is(':checked');
+    var insertLoc = $('#insertLocation').is(':checked');
+    var insertOrg = $('#insertOrganisation').is(':checked');
+    var savePrefs = $('#save-prefs').is(':checked');
+    google.script.run
+    .withSuccessHandler(
+      function(returnSuccess, element) {
+        element.disabled = false;
+        
+        $('#loading').text('');
+      })
+      .withFailureHandler(
+        function(msg, element) {
+          showError(msg, $('#button-bar'));
+          element.disabled = false;
+        })
+        .withUserObject(this)
+        .nameInsertion(key, $('#translated-text').val(), sourceLanguage, targetLanguage, insertPers, insertLoc, insertOrg, savePrefs);
+  }
+      
+   /**
+    * Runs a server-side function to translate the user-selected text and update
+    * the sidebar UI with the resulting translation.
+    */
+    function runEntityExtraction() {
+      $('#peopleDiv').html("");
+      $('#locDiv').html("");
+      $('#orgDiv').html("");
+      $('#error').remove();
+
+      google.script.run
+        .withSuccessHandler(
+          function(anotatedText) {
+            var JSONobj = JSON.parse(anotatedText);
+            var entitiesArray = JSONobj.entities;
+            console.log(entitiesArray);
+            var orgString = "";
+            var natString = "";
+            var titleString = "";
+
+            for (var entCount = 0; entCount < entitiesArray.length; entCount++)
+            {
+              google.script.run.colorText (entitiesArray[entCount].mention, entitiesArray[entCount].type);
+              var originalNameObj = new Object;
+              originalNameObj["name"] = entitiesArray[entCount].mention;
+              switch (entitiesArray[entCount].type)
+              {
+                case "PERSON":
+                google.script.run
+                  .withSuccessHandler(function(translatedName) {
+                    var NAMEobj = JSON.parse(translatedName);
+                    var index = NAMEobj.index;
+                    var peopleString = $('#peopleDiv').html();
+                    peopleString = peopleString + NAMEobj.originalName + ' (' + NAMEobj.result.translation+")<br/> ";
+                    $('#peopleDiv').html(peopleString);
+                    }
+                  )
+                  .withFailureHandler(function(msg, element) {
+                    var peopleString = $('#peopleDiv').html();
+                    peopleString = peopleString + element.name + '<br/>';
+                    $('#peopleDiv').html(peopleString);
+                    }
+                  )
+                  .withUserObject(originalNameObj)
+                  .runNameTranslationGS (entitiesArray[entCount].mention, entitiesArray[entCount].type, $('#key').val());
+                break;
+                case "LOCATION":
+                google.script.run
+                  .withSuccessHandler(function(translatedName) {
+                    var NAMEobj = JSON.parse(translatedName);
+                    var index = NAMEobj.index;
+                    var locString = $('#locDiv').html();
+                    locString = locString + NAMEobj.originalName + ' (' + NAMEobj.result.translation+")<br/> ";
+                    $('#locDiv').html(locString);
+                    }
+                  )
+                  .withFailureHandler(function(msg, element) {
+                    var locString = $('#locDiv').html();
+                    locString = locString + element.name + '<br/>';
+                    $('#locDiv').html(locString);
+                    }
+                  )
+                  .withUserObject(originalNameObj)
+                  .runNameTranslationGS (entitiesArray[entCount].mention, entitiesArray[entCount].type, $('#key').val());
+                break;
+                case "ORGANIZATION":
+                  orgString = orgString + entitiesArray[entCount].mention + "<br/> ";
+                  $('#orgDiv').html(orgString);
+                break;
+              }
+            }
+
+          })
+        .withFailureHandler(
+          function(msg, element) {
+            showError(msg, $('#error-box'));
+          })
+        .runEntityExtractionGS($('#key').val());
+    }
+    
+    function showError(msg, element) {
+      var div = $('<div id="error" class="error">' + msg + '</div>');
+      $(element).after(div);
+      $('#loading').text('');
+    }
+      
+  /**
+  * Inserts a div that contains an error message after a given element.
+  *
+  * @param msg The error message to display.
+  * @param element The element after which to display the error.
+  */
+  function showError(msg, element) {
+    var div = $('<div id="error" class="error">' + msg + '</div>');
+    $(element).after(div);
+    $('#loading').text('');
+  }
+  
+  /**
+    * Runs a server-side function to translate the user-selected text and update
+    * the sidebar UI with the resulting translation.
+    */
+    function getWikiData() {
+      this.disabled = true;
+      $('#error').remove();
+      google.script.run
+      .withSuccessHandler(
+        function(wikiText, element) {
+          $('#datapanel').html('');
+          $('#paragraphpanel').html('');
+          $('#titlepanel').html('');
+                
+            $('#titlepanel').html(wikiText[0][0]);
+            $('#datapanel').html(wikiText[1][0]);
+            $('#paragraphpanel').html(wikiText[2][0]);
+          
+          element.disabled = false;
+        }
+      )
+      .withFailureHandler(
+        function(msg, element) {
+          showError(msg, $('#wiki-error'));
+          element.disabled = false;
+        }
+      )
+      .withUserObject(this)
+      .getWikiData($('#key').val());
+    }
+  </script>
+</body>
+</html>
+
+
