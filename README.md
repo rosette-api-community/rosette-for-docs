@@ -4,12 +4,12 @@ Rosette for Docs
 An entity extraction and research tool for Google Docs.
 
 ### Rosette API documentation  
-> [Rosette API Features and Functions Language Support](https://developer.rosette.com/features-and-functions#language-support39)
+> [Rosette API Features and Functions](https://developer.rosette.com/features-and-functions#language-support39)
 
 ### How to install
 * In the document toolbar go to 'Tools' > 'Script editor...' and copy the code from Code.gs in the github repo into Code.gs in the script editor
 * Create a new file called Sidebar.html and copy the code from Sidebar.html in the github repo into Sidebar.html in the script editor
-* Save your work as Highlight for Docs
+* Save your work as Rosette for Docs
 
 ### How to use the Entites tab
 * Click on 'Add-ons' in the document tool bar and hover over 'Rosette for Docs', then click 'start' in the pop-up menu
