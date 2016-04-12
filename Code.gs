@@ -29,7 +29,7 @@ function onInstall(e) {
  */
 function showSidebar() {
   var ui = HtmlService.createHtmlOutputFromFile('Sidebar')
-      .setTitle('Highlight for Docs')
+      .setTitle('Rosette for Docs')
       .setSandboxMode(HtmlService.SandboxMode.IFRAME);
   DocumentApp.getUi().showSidebar(ui);
 }
