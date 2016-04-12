@@ -126,7 +126,7 @@ function runNameTranslationGS(mention, type, user_key) {
       "payload" : payload,
   };
 
-  var response  = UrlFetchApp.fetch('https://api.rosette.com/rest/v1/translated-name', options);
+  var response  = UrlFetchApp.fetch('https://api.rosette.com/rest/v1/name-translation', options);
   var responseString = response.toString();
   
   var responseToReturn = '{\"originalName\":\"' + mention + '\", ' + responseString.substr(1);
