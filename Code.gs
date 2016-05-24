@@ -90,6 +90,7 @@ function runEntityExtractionGS(user_key) {
            "accept": "application/json",
            "accept-encoding": "gzip",
            "content-type": "application/json",
+           "X-RosetteAPI-App": "GoogleDocs",
            "X-RosetteAPI-Key" : user_key
          }
          
