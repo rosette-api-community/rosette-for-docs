@@ -243,13 +243,16 @@ function nameInsertion(key, responseData, sourceLang, targetLang, insertPer, ins
         "entityType": entity.entityType,
         "targetLanguage": targetLang
       });
-
-      var response = rosapiRequest(key, jsonText, 'name-translation', false)
-
-      var json = JSON.parse(response.getContentText());
-
-      var newText = "[" + json["translation"] + "]";
-      
+       var acceptedLanguages = ['ara','zho','eng','jpn','kor','pus','fas', 'rus', 'urd'];
+       var pos = acceptedLanguages.indexOf(targetLang);
+       if(pos > -1){
+         var response = rosapiRequest(key, jsonText, 'name-translation', false)
+         var json = JSON.parse(response.getContentText());
+         var newText = "[" + json["translation"] + "]";
+       }
+       else{
+         throw "Unsupported language";
+       } 
       var text = DocumentApp.getActiveDocument().getBody().editAsText();  
       text.insertText(entity["endOffset"] + offset, newText);
       offset = offset + newText.length;
