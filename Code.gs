@@ -82,7 +82,7 @@ function getSelectedText() {
 
 function runEntityExtractionGS(user_key) {
   if(user_key === ""){
-  throw new Error ("Please include a Rosette API key");
+  throw new Error ("Please include a Rosette API key, 85");
   } else {
   var text = getSelectedText();
 
@@ -109,7 +109,7 @@ function runEntityExtractionGS(user_key) {
 
 function runNameTranslationGS(mention, type, user_key) {
     if(user_key === ""){
-  throw new Error ("Please include a Rosette API key");
+  throw new Error ("Please include a Rosette API key, 112");
   } else {
   var text = mention;
 
@@ -140,7 +140,7 @@ function runNameTranslationGS(mention, type, user_key) {
 // returns rosapi response
 var rosapiRequest = function(user_key, payload, endpoint, admOutput) {
     if(user_key === ""){
-      throw new Error ("Please include a Rosette API key");
+      throw new Error ("Please include a Rosette API key, 143");
   } else {
   var url = 'https://api.rosette.com/rest/v1/' + endpoint;
   if (admOutput) {
@@ -185,21 +185,34 @@ function getPreferences() {
 }
 
 // Entity class
-function Entity(name, entityType, startOffset, endOffset) {
+function Entity(name, entityType, startOffset, endOffset, id) {
   this.name = name;
   this.endOffset = endOffset;
   this.entityType = entityType;
   this.startOffset = startOffset;
+  this.entityId = id;
 }
 
 // Select entity from adm object
 function getEntity(adm, index) {
-  if (index > adm["attributes"]["entityMentions"]["items"].len) {
-    throw 'Index larger than result array';
-  } else {
-    var tmp = adm["attributes"]["entityMentions"]["items"][index];
-    return new Entity(tmp["normalized"], tmp["entityType"], tmp["startOffset"], tmp["endOffset"]);
+  if (index >= adm["attributes"]["entityMentions"]["items"].length) {
+    throw 'Index larger than result array'; } 
+  var tmp = adm["attributes"]["entityMentions"]["items"][index];
+  var other = getResolvedEntity(tmp,adm["attributes"]["resolvedEntities"]["items"]);
+  if(other){
+     return new Entity(tmp["normalized"], tmp["entityType"], tmp["startOffset"], tmp["endOffset"], other["entityId"]);
   }
+  return new Entity(tmp["normalized"],tmp["entityType"],tmp["startOffset"],tmp["endOffset"],null);
+}
+
+function getResolvedEntity(entity,data){
+  var id = entity["coreferenceChainId"];
+  for(var i = 0; i < data.length; i++){
+    if(data[i]["coreferenceChainId"] == id){
+      return data[i];
+    }
+  }
+  return null;
 }
 
 /**
@@ -224,7 +237,6 @@ function nameInsertion(key, responseData, sourceLang, targetLang, insertPer, ins
   }
   
   var data = JSON.parse(responseData);
- 
   var offset = 0;
   for (var index = 0; index < data["attributes"]["entityMentions"]["items"].length; index++) {
     var entity = getEntity(data, index);
@@ -243,16 +255,47 @@ function nameInsertion(key, responseData, sourceLang, targetLang, insertPer, ins
         "entityType": entity.entityType,
         "targetLanguage": targetLang
       });
-       var acceptedLanguages = ['ara','zho','eng','jpn','kor','pus','fas', 'rus', 'urd'];
-       var pos = acceptedLanguages.indexOf(targetLang);
-       if(pos > -1){
+
+       var useAPI = false;
+      if(sourceLang == "eng"){
+        var acceptedLanguages = ['ara','zho','eng','kor','pus','fas', 'rus'];
+        var pos = acceptedLanguages.indexOf(targetLang);
+        if(pos > -1) useAPI = true;
+      }
+      else{
+        var APIacceptedSources = ['ara','zho','jpn','kor','pus','fas','rus','urd'];
+        var pos = APIacceptedSources.indexOf(sourceLang);
+        if(pos > -1 && targetLang == "eng") useAPI = true;
+      }
+      if(useAPI){
          var response = rosapiRequest(key, jsonText, 'name-translation', false)
          var json = JSON.parse(response.getContentText());
-         var newText = "[" + json["translation"] + "]";
-       }
+         if(json){
+          var newText = " [" + json["translation"] + "]";
+        }
+        else{
+          var newText = " [no translation available]";}
+        }
        else{
-         throw "Unsupported language";
-       } 
+        if(sourceLang == "eng"){
+          var id = entity.entityId;
+          if(id){
+            var lang = changeLangCode(targetLang);
+            var wikiData = UrlFetchApp.fetch("https://www.wikidata.org/w/api.php?action=wbgetentities&ids=" + id + "&props=labels&languages=" + lang +"&format=json");
+            var json = JSON.parse(wikiData);
+            var name = json.entities[id].labels[lang];
+            if(name){
+              var newText = " [" + name.value + "]"; }
+            else{
+              var newText = " [no translation available]"; }
+          } 
+          else{
+            var newText = " [no translation available]"; }
+        }
+        else{
+          throw "Unsupported language";
+        }
+      }
       var text = DocumentApp.getActiveDocument().getBody().editAsText();  
       text.insertText(entity["endOffset"] + offset, newText);
       offset = offset + newText.length;
@@ -260,6 +303,18 @@ function nameInsertion(key, responseData, sourceLang, targetLang, insertPer, ins
   }
 }
 
+function changeLangCode(code){
+  if(code == "ara") return "ar";
+  if(code == "zho") return "zh-hans";
+  if(code == "eng") return "en";
+  if(code == "jpn") return "ja";
+  if(code == "kos") return "ko";
+  if(code == "pus") return "ps";
+  if(code == "fas") return "fa";
+  if(code == "rus") return "ru";
+  if(code == "urd") return "ur";
+  return code;
+}
 
 /**
  * Rosapi entities/linked call on the text of the current document
