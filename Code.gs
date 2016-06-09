@@ -358,8 +358,11 @@ function admResults(key, savePrefs) {
   var jsonText = JSON.stringify({
     "content": text.toString()
   });
-  
+  //var jsonText = JSON.stringify({
+  //  "content": text.toString(), "linkEntities":true
+  //});
   var response = rosapiRequest(key, jsonText, 'entities/linked', true);
+  //var response = rosapiRequest(key, jsonText,'entites',true)
   var json = response.getContentText();
   return json.toString();
 }
@@ -410,8 +413,11 @@ function getWikiData(user_key,sourceLang) {
           }
   if(sourceLang == "auto"){
      var payloadJSON = {"content": null};}
+     //var payloadJSON = {"content": null,"linkedEntities":true}
     else{
       var payloadJSON = {"content":null,"language":sourceLang};
+
+     //var payloadJSON = {"content": null,""language":sourceLang, linkedEntities":true}
       }
   payloadJSON.content = text.toString();
   var payload  = JSON.stringify(payloadJSON);
@@ -423,9 +429,11 @@ function getWikiData(user_key,sourceLang) {
   };
     try{
   var response  = UrlFetchApp.fetch('https://api.rosette.com/rest/v1/entities/linked/', options);
+  //var response = UrlFetchApp.fetch('https://api.rosette.com/rest/v1/entities',options)
   var json = JSON.parse(response);
       if(json["code"]){
-         response = tooManyRequests('https://api.rosette.com/rest/v1/entities/linked',options);}
+         response = tooManyRequests('https://api.rosette.com/rest/v1/entities/linked',options);
+         //response = tooManyRequests('https://api.rosette.com/rest/v1/entities',options)}
     }
   catch(err){
     throw "Unsupported Language. If you think this is a mistake, specify your language above";}
@@ -539,6 +547,10 @@ function getLanguage(key){
   var jsonText = JSON.stringify({
     "content": text.toString()
   });
+  //var jsonText = JSON.stringify({
+  //"content": text.toString(),
+  //"linkEntities": true
+  //});
   var response = rosapiRequest(key, jsonText, 'language', false);
   var responseJSON = JSON.parse(response);
   return responseJSON["languageDetections"][0]["language"];
@@ -553,6 +565,7 @@ function linkEntity(entity, key, sourceLang){
     "language": sourceLang
   });
   var response = rosapiRequest(key, jsonText, 'entities/linked', false);
+  //var response = rosapiRequest(key,jsonText,'entities',false);
     var responseJSON = JSON.parse(response); 
   try{  
     return responseJSON["entities"][0]["entityId"];
@@ -566,7 +579,7 @@ function tooManyRequests(url, options){
   var json = JSON.parse(response);
   while(json["code"]=="tooManyRequests"){
     Utilities.sleep(10);
-    response = UrlFetchApp.fetch('https://api.rosette.com/rest/v1/entities', options);
+    response = UrlFetchApp.fetch(url, options);
     json = JSON.parse(response);
   }
   return response;
