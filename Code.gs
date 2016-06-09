@@ -79,8 +79,11 @@ function getSelectedText() {
     return text.getText();
   }
 }
-
-
+/*
+* @param {String} user_key API key for Rosette
+*
+* @return {Object} JSON containing entities extracted from text with /entities
+*/
 function runEntityExtractionGS(user_key) {
   
   if(user_key === ""){
@@ -111,6 +114,15 @@ function runEntityExtractionGS(user_key) {
   return response.toString();
 }
 
+/*
+* @param {String} mention name to translate
+* @param {String} type entity type
+* @param {String} user_key API key for rosette
+* @param {String} sourceLang code representing source language (optional, default auto)
+* @param {String} targetLang code representing target language
+*
+* @return {String} translationPair string containing mention and its translation, wrapped in directional markers
+*/
 function runNameTranslationGS(mention, type, user_key, sourceLang, targetLang) {
   if(user_key === ""){
     throw new Error ("Please include a Rosette API key, 112");
@@ -223,6 +235,7 @@ function getEntity(adm, index, linked) {
   return new Entity(entity["normalized"],entity["entityType"],entity["startOffset"],entity["endOffset"],null);
 }
 
+//matches mentions to a resolved entity if possible
 function getResolvedEntity(entity,data){
   var id = entity["coreferenceChainId"];
   for(var i = 0; i < data.length; i++){
@@ -301,12 +314,18 @@ function nameInsertion(key, responseData, sourceLang, targetLang, insertPer, ins
   }
 }
 
+/*
+* Certain languages are supported by /name-translation but not entity linking
+* inserts these into the text
+*
+*/
 function notLinkedInsertion(key, sourceLang, targetLang, insertPer, insertLoc, insertOrg, savePrefs) {
   var text = getSelectedText();
   var data = rosapiRequest(key, JSON.stringify({"content": text.toString()}), "entities", true);
   nameInsertion(key, data, sourceLang, targetLang, insertPer, insertLoc, insertOrg, savePrefs, false);
 }
 
+//inserts direction markers for overall document
 function documentOrientation(sourceLang){
   var LRlang = ["eng","spa","zho","jpn","ita","nld","fra","deu", "ind","kor","por","rus"];
   var RLlang = ["ara","urd","heb","pus","fas"];
@@ -327,6 +346,10 @@ function documentOrientation(sourceLang){
   }
 }
 
+/*
+* @param {String} code 3 letter Rosette language code
+* @return {String code wiki language code
+*/ 
 function changeLangCode(code){
   if(code == "ara") return "ar";
   if(code == "zho") return "zh-hans";
@@ -367,7 +390,7 @@ function admResults(key, savePrefs) {
   return json.toString();
 }
 
-
+//changes background color for entities
 function colorText(mention, type) {
   var body = DocumentApp.getActiveDocument().getBody();  
   var colorVal;
@@ -399,6 +422,11 @@ function colorText(mention, type) {
 }
 
 /**
+*  gets linked entities from text to parse wikidata
+*
+* @param {String} user_key key for Rosette
+* @param {sourceLang} optional workaround if rosette is identifying languages incorrectly
+*
  */
 function getWikiData(user_key,sourceLang) {
   if(user_key === ""){
@@ -441,6 +469,7 @@ function getWikiData(user_key,sourceLang) {
   }
 }
 
+//extracts english and foreign (if applicable) wiki info using regex
 function parseEntities(response,sourceLang) {
   if(JSON.parse(response)["entities"].length === 0){
     throw new Error( "No entities found");
@@ -501,7 +530,12 @@ function getWikiContent(link,sourceLang) {
   
   return finalContent;
 }
-
+/*
+* @param {String} sourceLang 
+* @param {String} targetLang
+*
+* @return {boolean} useApi
+*/
 function useAPI(sourceLang,targetLang){
    if(sourceLang == "eng"){
      var acceptedLanguages = ['ara','zho','eng','kor','pus','fas', 'rus'];    
@@ -516,6 +550,7 @@ function useAPI(sourceLang,targetLang){
   return false;
 }
 
+//attempts to translate name using wikidata given entityID
 function translateNameWiki(entityId, targetLanguage){
   var lang = changeLangCode(targetLanguage);
   var wikiData = UrlFetchApp.fetch("https://www.wikidata.org/w/api.php?action=wbgetentities&ids=" + entityId + "&props=labels&languages=" + lang +"&format=json");
@@ -526,6 +561,7 @@ function translateNameWiki(entityId, targetLanguage){
   return null;
 }
 
+//translates name using /name-translation
 function translateNameRosette(mention, type, sourceLanguage, targetLanguage, key){
   var parameters = JSON.stringify({
         "name": mention,
@@ -542,6 +578,7 @@ function translateNameRosette(mention, type, sourceLanguage, targetLanguage, key
     return "no_translation"; }
 }
 
+//if sourceLanguage set as auto, calls /language
 function getLanguage(key){
   var text = DocumentApp.getActiveDocument().getBody().editAsText().getText();  
   var jsonText = JSON.stringify({
