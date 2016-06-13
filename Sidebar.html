@@ -78,6 +78,10 @@
    <div class="tab-content"> <div role="tabpanel" class="tab-pane active" id="entities">
   <br>
   <div class="block">
+  <div>
+  Before running, <a href = "https://support.google.com/docs/answer/65166?hl=en">ensure text direction is correct</a>
+  </div>
+  <br>
   <label for="sourceLang">Source Language (optional)</label>
   <div>
   <select id="sourceLang" name="sourceLang" class="form-control col-sm-2">
@@ -85,6 +89,7 @@
   <option value="ara">Arabic</option>
   <option value="zho">Chinese</option>
   <option value="nld">Dutch</option>
+  <option value="eng">English</option>
   <option value="fra">French</option>
   <option value="deu">German</option>
   <option value="heb">Hebrew</option>
@@ -108,21 +113,21 @@
   <select id="targetLang" name="targetLang" class="form-control">
   <option value="ara">Arabic</option>
   <option value="zho">Chinese</option>
-  <option value="nld">Dutch</option>
+  <option value="nl">Dutch</option>
   <option value="eng">English</option>
-  <option value="fra">French</option>
-  <option value="deu">German</option>
-  <option value="heb">Hebrew</option>
-  <option value="ind">Indonesian</option>
-  <option value="ita">Italian</option>
-  <option value="jpn">Japanese</option>
+  <option value="fr">French</option>
+  <option value="de">German</option>
+  <option value="he">Hebrew</option>
+  <option value="id">Indonesian</option>
+  <option value="it">Italian</option>
+  <option value="ja">Japanese</option>
   <option value="kor">Korean</option>
   <option value="pus">Pashto</option>
   <option value="fas">Persian</option>
-  <option value="por">Portugese</option>
+  <option value="pt">Portugese</option>
   <option value="rus">Russian</option>
-  <option value="spa">Spanish</option>
-  <option value="urd">Urdu</option>
+  <option value="es">Spanish</option>
+  <option value="ur">Urdu</option>
   </select>
   </div>
   </div>
@@ -170,8 +175,22 @@
     <div role="tabpanel" class="tab-pane" id="wiki">
 
       <br>
+        <div class="block">
+  <label for="sourceLangWiki">Source Language (optional)</label>
+  <div>
+  <select id="sourceLangWiki" name="sourceLangWiki" class="form-control col-sm-2">
+  <option value="auto">Auto</option>
+  <option value="ara">Arabic</option>
+  <option value="zho">Chinese</option>
+  <option value="eng">English</option>
+  <option value="spa">Spanish</option>
+  </select>
+  </div>
+  </div>
+  <br>
       <div class="block" id="button-bar">
         <button class="blue" id="get-wiki">Get wiki data</button>
+        <button class="blue" id="clear-wiki">Clear</button>
       </div>
        
     <br> 
@@ -180,6 +199,13 @@
   <div id="datapanel">
   </div>
   <div id="paragraphpanel">
+  </div>
+      <br> 
+     <div id="titlepanel2">
+  </div>
+  <div id="datapanel2">
+  </div>
+  <div id="paragraphpanel2">
   </div>
   <br>
     <div class="block" id="wiki-error">
@@ -204,9 +230,10 @@
 * user's origin and destination language preferences if previously set.
 */
 $(function() {
-  $('#run-analysis').click(admResults);
   $('#get-wiki').click(getWikiData);
   $('#run-analysis').click(runEntityExtraction);
+  $('#run-analysis').click(orientDocument);
+  $('#clear-wiki').click(clearWikiSpace);
 });
 
 /**
@@ -222,14 +249,20 @@ function loadNameTranslationPreferences(userPrefs) {
   $('#insertPerson').prop("checked", userPrefs.insertPerson);
   $('#insertLocation').prop("checked", userPrefs.insertLocation);
   $('#insertOrganisation').prop("checked", userPrefs.insertOrganisation);
+  $('#sourceLangWiki').val(userPrefs.sourceLangWiki);
 }
+
+function orientDocument(){
+  this.disabled = true;
+  var sourceLang = $('#sourceLang').val();
+  google.script.run.documentOrientation(sourceLang);
+  this.disabled = false;}
 
 /**
 * Runs a server-side function to translate the user-selected text and update
 * the sidebar UI with the resulting translation.
 */
 function admResults() {
-$('#loading').text('Processing...');
   this.disabled = true;
   $('#error').remove();
   var key = $('#key').val();
@@ -239,16 +272,19 @@ $('#loading').text('Processing...');
     function(translatedText, element) {
       $('#translated-text').val(translatedText);
       var JSONobj = JSON.parse(translatedText);
+      try{
       var entitiesArray = JSONobj["attributes"]["entityMentions"]["items"];
       for (var entCount = 0; entCount < entitiesArray.length; entCount++) {
         google.script.run.colorText(entitiesArray[entCount]["normalized"], entitiesArray[entCount]["entityType"]);
-      }
-      element.disabled = false;
-      
+        }
       nameInsertion();
-      google.script.run.withSuccessHandler(loadNameTranslationPreferences)
-  .withFailureHandler(showError).getPreferences();
-      
+      google.script.run.withSuccessHandler(loadNameTranslationPreferences).withFailureHandler(showError).getPreferences();
+       }
+       catch(err){
+       $('#translated-text').val(null);
+       notLinkedInsertion();
+       }
+       
     })
     .withFailureHandler(
       function(msg, element) {
@@ -277,17 +313,46 @@ $('#loading').text('Processing...');
     google.script.run
     .withSuccessHandler(
       function(returnSuccess, element) {
-        element.disabled = false;
         
         $('#loading').text('');
+        element.disabled = false;
       })
       .withFailureHandler(
         function(msg, element) {
+        $('#loading').text('');
           showError(msg, $('#button-bar'));
           element.disabled = false;
         })
         .withUserObject(this)
-        .nameInsertion(key, $('#translated-text').val(), sourceLanguage, targetLanguage, insertPers, insertLoc, insertOrg, savePrefs);
+        .nameInsertion(key, $('#translated-text').val(), sourceLanguage, targetLanguage, insertPers, insertLoc, insertOrg, savePrefs,true);
+  }
+ 
+ function notLinkedInsertion() {
+    this.disabled = true;
+    $('#error').remove();
+    var key = $('#key').val();
+    var sourceLanguage = $('#sourceLang').val();
+    var targetLanguage = $('#targetLang').val();
+    var insertPers = $('#insertPerson').is(':checked');
+    var insertLoc = $('#insertLocation').is(':checked');
+    var insertOrg = $('#insertOrganisation').is(':checked');
+    var savePrefs = $('#save-prefs').is(':checked');
+    google.script.run
+    .withSuccessHandler(
+      function(entities, element) {
+
+        $('#loading').text('');
+        element.disabled = false;
+        
+      })
+      .withFailureHandler(
+        function(msg, element) {
+          $('#loading').text('');
+          showError(msg, $('#button-bar'));
+          element.disabled = false;
+        })
+        .withUserObject(this)
+        .notLinkedInsertion(key, sourceLanguage, targetLanguage, insertPers, insertLoc, insertOrg, savePrefs);
   }
       
    /**
@@ -295,6 +360,7 @@ $('#loading').text('Processing...');
     * the sidebar UI with the resulting translation.
     */
     function runEntityExtraction() {
+      $('#loading').text('Processing...');
       $('#peopleDiv').html("");
       $('#locDiv').html("");
       $('#orgDiv').html("");
@@ -309,7 +375,11 @@ $('#loading').text('Processing...');
             var orgString = "";
             var natString = "";
             var titleString = "";
-
+            var insertPers = $('#insertPerson').is(':checked');
+            var insertLoc = $('#insertLocation').is(':checked');
+            var insertOrg = $('#insertOrganisation').is(':checked');
+            var targetLanguage = $('#targetLang').val();
+            var sourceLanguage = $('#sourceLang').val();
             for (var entCount = 0; entCount < entitiesArray.length; entCount++)
             {
               google.script.run.colorText (entitiesArray[entCount].mention, entitiesArray[entCount].type);
@@ -319,62 +389,72 @@ $('#loading').text('Processing...');
               {
                 case "PERSON":
                 google.script.run
-                  .withSuccessHandler(function(translatedName) {
-                    var NAMEobj = JSON.parse(translatedName);
-                    var index = NAMEobj.index;
+                  .withSuccessHandler(function(NAMEobj) {
                     var peopleString = $('#peopleDiv').html();
-                    peopleString = peopleString + NAMEobj.originalName + ' (' + NAMEobj.result.translation+")<br/> ";
+                    //peopleString = peopleString + NAMEobj.originalName + ' (' + NAMEobj.translation+")<br/> ";
+                    peopleString = peopleString + NAMEobj+"<br/>";
                     $('#peopleDiv').html(peopleString);
                     }
                   )
                   .withFailureHandler(function(msg, element) {
                     var peopleString = $('#peopleDiv').html();
-                    peopleString = peopleString + element.name + '<br/>';
+                    peopleString = peopleString + element.name + ' (no_translation)' + '<br/>';
                     $('#peopleDiv').html(peopleString);
                     }
                   )
                   .withUserObject(originalNameObj)
-                  .runNameTranslationGS (entitiesArray[entCount].mention, entitiesArray[entCount].type, $('#key').val());
+                  .runNameTranslationGS (entitiesArray[entCount].mention, entitiesArray[entCount].type, $('#key').val(), sourceLanguage, targetLanguage);
                 break;
                 case "LOCATION":
                 google.script.run
-                  .withSuccessHandler(function(translatedName) {
-                    var NAMEobj = JSON.parse(translatedName);
-                    var index = NAMEobj.index;
+                  .withSuccessHandler(function(NAMEobj) {
                     var locString = $('#locDiv').html();
-                    locString = locString + NAMEobj.originalName + ' (' + NAMEobj.result.translation+")<br/> ";
+                    //locString = locString + NAMEobj.originalName + ' (' + NAMEobj.translation+")<br/> ";
+                    locString = locString + NAMEobj+"<br/>";
                     $('#locDiv').html(locString);
                     }
                   )
                   .withFailureHandler(function(msg, element) {
                     var locString = $('#locDiv').html();
-                    locString = locString + element.name + '<br/>';
+                    locString = locString + element.name + ' (no_translation)' + '<br/>';
                     $('#locDiv').html(locString);
                     }
                   )
                   .withUserObject(originalNameObj)
-                  .runNameTranslationGS (entitiesArray[entCount].mention, entitiesArray[entCount].type, $('#key').val());
+                  .runNameTranslationGS (entitiesArray[entCount].mention, entitiesArray[entCount].type, $('#key').val(), sourceLanguage, targetLanguage);
                 break;
                 case "ORGANIZATION":
-                  orgString = orgString + entitiesArray[entCount].mention + "<br/> ";
-                  $('#orgDiv').html(orgString);
+                  google.script.run
+                  .withSuccessHandler(function(NAMEobj) {
+                    var orgString = $('#orgDiv').html();
+                    //orgString = orgString + NAMEobj.originalName + ' (' + NAMEobj.translation+")<br/> ";
+                    orgString = orgString + NAMEobj+"<br/>";
+                    $('#orgDiv').html(orgString);
+                    }
+                  )
+                  .withFailureHandler(function(msg, element) {
+                    var orgString = $('#orgDiv').html();
+                    orgString = orgString + element.name + ' (no_translation)'+ '<br/>';
+                    $('#orgDiv').html(orgString);
+                    }
+                  )
+                  .withUserObject(originalNameObj)
+                  .runNameTranslationGS (entitiesArray[entCount].mention, entitiesArray[entCount].type, $('#key').val(), sourceLanguage, targetLanguage);
                 break;
               }
             }
-
+            admResults();
+            //$('#loading').text('');
           })
         .withFailureHandler(
           function(msg, element) {
             showError(msg, $('#error-box'));
-          })
+            this.disabled = false;
+            $('#loading').text('');
+          }).withUserObject(this)
         .runEntityExtractionGS($('#key').val());
     }
     
-    function showError(msg, element) {
-      var div = $('<div id="error" class="error">' + msg + '</div>');
-      $(element).after(div);
-      $('#loading').text('');
-    }
       
   /**
   * Inserts a div that contains an error message after a given element.
@@ -395,18 +475,20 @@ $('#loading').text('Processing...');
     function getWikiData() {
       this.disabled = true;
       $('#error').remove();
+      var sourceLangWiki = $('#sourceLangWiki').val();
       google.script.run
       .withSuccessHandler(
         function(wikiText, element) {
-          $('#datapanel').html('');
-          $('#paragraphpanel').html('');
-          $('#titlepanel').html('');
+          clearWikiSpace();
                 
             $('#titlepanel').html(wikiText[0][0]);
             $('#datapanel').html(wikiText[1][0]);
             $('#paragraphpanel').html(wikiText[2][0]);
-          
+             $('#titlepanel2').html(wikiText[3][0]);
+            $('#datapanel2').html(wikiText[4][0]);
+            $('#paragraphpanel2').html(wikiText[5][0]);
           element.disabled = false;
+          
         }
       )
       .withFailureHandler(
@@ -416,10 +498,18 @@ $('#loading').text('Processing...');
         }
       )
       .withUserObject(this)
-      .getWikiData($('#key').val());
+      .getWikiData($('#key').val(), sourceLangWiki);
     }
+    
+    function clearWikiSpace(){
+      $('#datapanel').html('');
+      $('#paragraphpanel').html('');
+      $('#titlepanel').html('');
+      $('#datapanel2').html('');
+      $('#paragraphpanel2').html('');
+      $('#titlepanel2').html('');
+    }
+    
   </script>
 </body>
 </html>
-
-
