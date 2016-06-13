@@ -463,6 +463,7 @@ function getWikiData(user_key,sourceLang) {
          response = tooManyRequests('https://api.rosette.com/rest/v1/entities/linked',options);
          //response = tooManyRequests('https://api.rosette.com/rest/v1/entities',options)}
     }
+    }
   catch(err){
     throw "Unsupported Language. If you think this is a mistake, specify your language above";}
   return parseEntities(response,sourceLang);
